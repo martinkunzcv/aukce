@@ -5,6 +5,8 @@
 - Client ID: `webid`
 - Access type: confidential
 - Root URL: `http://localhost:8080`
+- Browser/admin access to Keycloak: `http://localhost:8081`
+- Internal container-to-container URL: `http://keycloak:8080`
 - Valid redirect URIs:
   - `http://localhost:8080/oauth2/callback`
 - Web origins:
@@ -43,3 +45,4 @@ Doporučení:
 - Pro produkci nahraďte `start-dev` příkaz plným `start` režimem.
 - Zapněte HTTPS nebo terminaci TLS před compose stackem.
 - Omezte přístup do Keycloak admin konzole jen z admin sítě/VPN.
+- Nepoužívejte `localhost` jako issuer URL uvnitř jiných kontejnerů; tam musí být použita interní service DNS adresa `keycloak`.

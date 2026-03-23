@@ -74,7 +74,18 @@ cp .env.example .env
 # upravte hesla, client secret a hostname
 ```
 
+Důležité nastavení v `.env`:
+- `KEYCLOAK_EXTERNAL_URL` je URL, na které Keycloak otevíráte z browseru/hosta, typicky `http://localhost:8081`.
+- `KEYCLOAK_INTERNAL_URL` je interní Docker adresa pro kontejnery, typicky `http://keycloak:8080`.
+- `OAUTH2_PROXY_OIDC_ISSUER_URL` musí v Compose prostředí mířit na **interní** issuer URL, ne na `localhost`, jinak se `oauth2-proxy` pokouší připojit sám na sebe a spadne na `connection refused`.
+
 ### 5.2 Start stacku
+
+```bash
+docker compose up -d keycloak-db keycloak
+```
+
+Počkejte, až bude Keycloak healthy, a teprve potom spusťte zbytek stacku:
 
 ```bash
 docker compose up -d
@@ -88,8 +99,20 @@ Minimum:
 - vytvořit realm `company-auctions`,
 - napojit AD přes LDAP/User Federation,
 - vytvořit client `webid`,
+- nastavit redirect URI na `http://localhost:8080/oauth2/callback`,
 - vytvořit role `employee_bidder`, `auction_admin`, `auction_approver`,
 - namapovat role do claimů posílaných přes oauth2-proxy.
+
+### 5.4 Proč padal `oauth2-proxy`
+
+Pokud jste v logu viděli chybu typu:
+- `WARNING: mixing --trusted-ip with --reverse-proxy is a potential security vulnerability`
+- `Get "http://localhost:8081/realms/company-auctions/.well-known/openid-configuration": connect: connection refused`
+
+byly tam dva problémy:
+
+1. `trusted_ips` v `oauth2-proxy` se nesmí kombinovat s `reverse_proxy`, pokud to není opravdu nezbytné. V této revizi je `trusted_ips` odstraněné a trust model se nechává na vnější proxy vrstvě a interní Docker síti.
+2. `localhost:8081` je správná adresa z hostitelského stroje, ale **ne z kontejneru oauth2-proxy**. Uvnitř Compose musí issuer mířit na `http://keycloak:8080/realms/company-auctions`.
 
 ## 6. Co je ještě potřeba po doplnění upstream WeBid kódu
 

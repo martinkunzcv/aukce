@@ -16,4 +16,3 @@ cookie_expire = "8h"
 reverse_proxy = true
 scope = "openid profile email roles"
 whitelist_domains = [ ".localhost" ]
-trusted_ips = [ "172.16.0.0/12", "192.168.0.0/16" ]

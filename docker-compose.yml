@@ -54,6 +54,12 @@ services:
       KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /realms/${KEYCLOAK_REALM} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && grep -q '200 OK\|302 Found' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
     ports:
       - "${KEYCLOAK_HTTP_PORT}:8080"
     volumes:
@@ -64,7 +70,8 @@ services:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
     restart: unless-stopped
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
     command: ["--config=/etc/oauth2-proxy/oauth2-proxy.cfg"]
     environment:
       OAUTH2_PROXY_CLIENT_ID: ${OAUTH2_PROXY_CLIENT_ID}
