@@ -2,6 +2,7 @@
 
 ## Realm
 - Realm name: `company-auctions`
+- Realm import file: `keycloak/company-auctions-realm.json`
 - Client ID: `webid`
 - Access type: confidential
 - Root URL: `http://localhost:8080`
@@ -46,3 +47,10 @@ Doporučení:
 - Zapněte HTTPS nebo terminaci TLS před compose stackem.
 - Omezte přístup do Keycloak admin konzole jen z admin sítě/VPN.
 - Nepoužívejte `localhost` jako issuer URL uvnitř jiných kontejnerů; tam musí být použita interní service DNS adresa `keycloak`.
+
+## Troubleshooting
+- Pokud vidíte `password authentication failed for user "keycloak"`, bývá problém ve starém persistentním volume Postgresu.
+- `POSTGRES_PASSWORD` se použije jen při **první inicializaci** databázového volume. Pozdější změna `KEYCLOAK_DB_PASSWORD` v `.env` sama heslo uvnitř existující DB nezmění.
+- V takovém případě buď vraťte původní heslo, nebo smažte volume `keycloak-db-data` a nechte DB vytvořit znovu.
+
+- Po importu změňte client secret z placeholderu `replace-me` na reálnou hodnotu a stejnou hodnotu nastavte do `.env` jako `OAUTH2_PROXY_CLIENT_SECRET`.

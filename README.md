@@ -96,12 +96,13 @@ docker compose up -d
 Postup je v `keycloak/README.md`.
 
 Minimum:
-- vytvořit realm `company-auctions`,
+- realm `company-auctions` se při startu Keycloaku importuje automaticky ze souboru `keycloak/company-auctions-realm.json`,
+- po prvním startu jen zkontrolovat, že byl import úspěšný,
+- upravit client secret `webid` z placeholderu `replace-me` na reálnou hodnotu a zapsat stejnou hodnotu do `.env` jako `OAUTH2_PROXY_CLIENT_SECRET`,
 - napojit AD přes LDAP/User Federation,
-- vytvořit client `webid`,
-- nastavit redirect URI na `http://localhost:8080/oauth2/callback`,
-- vytvořit role `employee_bidder`, `auction_admin`, `auction_approver`,
-- namapovat role do claimů posílaných přes oauth2-proxy.
+- podle potřeby upravit redirect URI / web origin,
+- role `employee_bidder`, `auction_admin`, `auction_approver` jsou součástí importu,
+- mapper pro realm roles do claimu `groups` je součástí importu.
 
 ### 5.4 Proč padal `oauth2-proxy`
 
@@ -113,7 +114,38 @@ byly tam dva problémy:
 
 1. `trusted_ips` v `oauth2-proxy` se nesmí kombinovat s `reverse_proxy`, pokud to není opravdu nezbytné. V této revizi je `trusted_ips` odstraněné a trust model se nechává na vnější proxy vrstvě a interní Docker síti.
 2. `localhost:8081` je správná adresa z hostitelského stroje, ale **ne z kontejneru oauth2-proxy**. Uvnitř Compose musí issuer mířit na `http://keycloak:8080/realms/company-auctions`.
-3. Keycloak healthcheck je teď zjednodušený na čistý TCP probe `: > /dev/tcp/127.0.0.1/8080`, aby neobsahoval žádné escapování ani HTTP request a byl co nejkompatibilnější s Docker Compose na Windows.
+3. Pokud Keycloak vrací `404 {"error":"Realm does not exist"}`, chyběl import realmu. V této revizi je proto přidán `keycloak/company-auctions-realm.json`, který se při startu importuje přes `--import-realm`.
+4. Keycloak healthcheck je teď zjednodušený na čistý TCP probe `: > /dev/tcp/127.0.0.1/8080`, aby neobsahoval žádné escapování ani HTTP request a byl co nejkompatibilnější s Docker Compose na Windows.
+
+
+### 5.5 Troubleshooting: `password authentication failed for user "keycloak"`
+
+Pokud Keycloak startuje, ale v logu je:
+- `FATAL: password authentication failed for user "keycloak"`
+
+je nejčastější příčina tato:
+
+1. `keycloak-db` už byl jednou inicializovaný se starým heslem ve volume `keycloak-db-data`.
+2. Vy jste potom změnil `KEYCLOAK_DB_PASSWORD` v `.env`, ale Postgres si původní heslo ve volume ponechal.
+
+Důležité je, že `docker-compose.yml` používá **stejnou** proměnnou `KEYCLOAK_DB_PASSWORD` jak pro Postgres, tak pro Keycloak, takže pokud jde o čistý start bez starého volume, musí si rozumět.
+
+Ověřte v `.env`:
+
+```bash
+KEYCLOAK_DB_USER=keycloak
+KEYCLOAK_DB_PASSWORD=nejake_heslo
+```
+
+Pokud už jste stack spouštěl dřív a heslo měnil, smažte jen Keycloak DB volume a databázi nechte znovu inicializovat:
+
+```bash
+docker compose down
+docker volume rm ${COMPOSE_PROJECT_NAME:-aukce}_keycloak-db-data
+docker compose up -d keycloak-db keycloak
+```
+
+Pokud nechcete mazat volume, vraťte do `.env` původní heslo, se kterým byl Postgres volume poprvé vytvořen.
 
 ## 6. Co je ještě potřeba po doplnění upstream WeBid kódu
 
