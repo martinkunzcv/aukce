@@ -55,7 +55,9 @@ services:
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /realms/${KEYCLOAK_REALM} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && grep -q '200 OK\|302 Found' <&3"]
+      test:
+        - CMD-SHELL
+        - ': > /dev/tcp/127.0.0.1/8080'
       interval: 10s
       timeout: 5s
       retries: 20

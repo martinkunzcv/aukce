@@ -113,6 +113,7 @@ byly tam dva problémy:
 
 1. `trusted_ips` v `oauth2-proxy` se nesmí kombinovat s `reverse_proxy`, pokud to není opravdu nezbytné. V této revizi je `trusted_ips` odstraněné a trust model se nechává na vnější proxy vrstvě a interní Docker síti.
 2. `localhost:8081` je správná adresa z hostitelského stroje, ale **ne z kontejneru oauth2-proxy**. Uvnitř Compose musí issuer mířit na `http://keycloak:8080/realms/company-auctions`.
+3. Keycloak healthcheck je teď zjednodušený na čistý TCP probe `: > /dev/tcp/127.0.0.1/8080`, aby neobsahoval žádné escapování ani HTTP request a byl co nejkompatibilnější s Docker Compose na Windows.
 
 ## 6. Co je ještě potřeba po doplnění upstream WeBid kódu
 
