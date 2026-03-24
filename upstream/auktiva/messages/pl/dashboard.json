@@ -1,0 +1,33 @@
+{
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Witaj ponownie, {name}!",
+    "createAuction": "Utwórz aukcję",
+    "stats": {
+      "totalBids": "Wszystkie oferty",
+      "totalBidAmount": "Całkowita kwota ofert",
+      "itemsBidOn": "Licytowane przedmioty",
+      "currentlyWinning": "Aktualnie wygrywasz"
+    },
+    "activeBids": {
+      "title": "Twoje aktywne oferty"
+    },
+    "myListings": {
+      "title": "Twoje przedmioty",
+      "subtitle": "Przedmioty wystawione na aukcję",
+      "bids": "{count, plural, =0 {Brak ofert} =1 {1 oferta} other {# ofert}}"
+    },
+    "auctions": {
+      "title": "Aukcje, do których dołączyłeś"
+    },
+    "empty": {
+      "title": "Brak aukcji",
+      "description": "Nie dołączyłeś jeszcze do żadnej aukcji ani jej nie utworzyłeś. Utwórz swoją pierwszą aukcję lub dołącz do jednej za pomocą linku zaproszenia.",
+      "createFirst": "Utwórz swoją pierwszą aukcję"
+    },
+    "seo": {
+      "title": "Panel",
+      "description": "Zarządzaj swoimi aukcjami i ofertami"
+    }
+  }
+}

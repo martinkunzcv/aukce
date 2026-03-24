@@ -1,0 +1,82 @@
+{
+  "errors": {
+    "generic": "Ocurrió un error. Por favor inténtalo de nuevo.",
+    "somethingWentWrong": "Algo salió mal. Por favor inténtalo de nuevo.",
+    "networkError": "Error de red. Por favor verifica tu conexión.",
+    "unauthorized": "No estás autorizado para realizar esta acción.",
+    "notFound": "El recurso solicitado no fue encontrado.",
+    "forbidden": "No tienes permiso para acceder a este recurso.",
+    "validation": {
+      "required": "Este campo es obligatorio",
+      "invalidEmail": "Por favor introduce un correo válido",
+      "passwordTooShort": "La contraseña debe tener al menos {min} caracteres",
+      "passwordsDoNotMatch": "Las contraseñas no coinciden",
+      "invalidAmount": "Por favor introduce una cantidad válida",
+      "minBid": "La puja mínima es {symbol}{amount}"
+    },
+    "auth": {
+      "invalidCredentials": "Correo o contraseña inválidos",
+      "emailInUse": "Este correo ya está registrado",
+      "accountNotFound": "No se encontró cuenta con este correo",
+      "invalidToken": "Token inválido o expirado",
+      "sessionExpired": "Tu sesión ha expirado. Por favor inicia sesión de nuevo."
+    },
+    "auction": {
+      "createFailed": "Error al crear la subasta",
+      "updateFailed": "Error al actualizar la subasta",
+      "deleteFailed": "Error al eliminar la subasta",
+      "notFound": "Subasta no encontrada",
+      "alreadyEnded": "Esta subasta ya ha finalizado",
+      "notMember": "No eres miembro de esta subasta"
+    },
+    "item": {
+      "createFailed": "Error al crear el artículo",
+      "updateFailed": "Error al actualizar el artículo",
+      "deleteFailed": "Error al eliminar el artículo",
+      "notFound": "Artículo no encontrado"
+    },
+    "bid": {
+      "placeFailed": "Error al realizar la puja",
+      "tooLow": "Tu puja es demasiado baja",
+      "auctionEnded": "Esta subasta ha finalizado",
+      "itemEnded": "La puja para este artículo ha terminado",
+      "ownItem": "No puedes pujar en tu propio artículo"
+    },
+    "invite": {
+      "sendFailed": "Error al enviar la invitación",
+      "invalidInvite": "Invitación inválida o expirada",
+      "alreadyMember": "Ya eres miembro de esta subasta"
+    },
+    "profile": {
+      "updateFailed": "Error al actualizar perfil",
+      "passwordChangeFailed": "Error al cambiar contraseña",
+      "incorrectPassword": "La contraseña actual es incorrecta"
+    },
+    "upload": {
+      "imageFailed": "Error al subir imagen",
+      "thumbnailFailed": "Error al subir miniatura",
+      "deleteFailed": "Error al eliminar imagen",
+      "reorderFailed": "Error al reordenar imágenes"
+    },
+    "member": {
+      "updateRoleFailed": "Error al actualizar rol del miembro",
+      "removeFailed": "Error al eliminar miembro"
+    },
+    "notification": {
+      "markReadFailed": "Error al marcar notificación como leída",
+      "markAllReadFailed": "Error al marcar todas las notificaciones como leídas"
+    },
+    "settings": {
+      "updateFailed": "Error al actualizar configuración"
+    },
+    "discussion": {
+      "createFailed": "Error al publicar discusión",
+      "updateFailed": "Error al actualizar discusión",
+      "deleteFailed": "Error al eliminar discusión",
+      "notFound": "Comentario no encontrado",
+      "disabled": "Los comentarios están deshabilitados para este artículo",
+      "tooLong": "El comentario es demasiado largo (máx 2000 caracteres)",
+      "empty": "El comentario no puede estar vacío"
+    }
+  }
+}

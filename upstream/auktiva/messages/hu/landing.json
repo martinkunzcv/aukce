@@ -1,0 +1,113 @@
+{
+  "landing": {
+    "hero": {
+      "badge": "{version} már elérhető",
+      "title": "Aukciózz",
+      "titleHighlight": "egyszerűen, közösségben",
+      "description": "100% ingyenes, nyílt forráskódú aukciós platform jótékonysági eseményekhez és személyes használatra. Tökéletes éves lomtalanításhoz, garázsvásárhoz vagy barátoknak való eladáshoz. Nincsenek díjak, nincsenek korlátok.",
+      "startAuction": "Aukció indítása",
+      "viewOnGithub": "Megtekintés GitHubon",
+      "demoAlt": "Interaktív demó",
+      "bidNow": "Licitálj most",
+      "showDemo": "Mutasd a demót",
+      "demoHint": "Kattints, hogy megnézd hogyan működik az Auktiva",
+      "demoTitle": "Auktiva Demó",
+      "videoNotSupported": "A böngésződ nem támogatja a videó elemet.",
+      "close": "Bezárás"
+    },
+    "features": {
+      "sectionTitle": "Minden egy helyen a",
+      "sectionTitleHighlight": "tökéletes aukcióhoz",
+      "sectionDescription": "Hatékony funkciók szervezőknek és licitálóknak.",
+      "realTimeBidding": {
+        "title": "Valós idejű licitálás",
+        "description": "Kövesd a liciteket valós időben. Az oldal automatikusan frissül."
+      },
+      "privateSecure": {
+        "title": "Privát és biztonságos",
+        "description": "Szervezz meghívásos aukciókat jogosultság-alapú hozzáféréssel. Adataid biztonságban vannak."
+      },
+      "multiCurrency": {
+        "title": "Többdevizás támogatás",
+        "description": "Nemzetközi események támogatása automatikus pénznemformázással (USD, EUR, GBP, HUF, stb.)."
+      },
+      "smartNotifications": {
+        "title": "Okos értesítések",
+        "description": "Azonnal értesülj, ha túllicitálnak vagy ha a figyelt tételek hamarosan zárulnak."
+      },
+      "richMedia": {
+        "title": "Részletes megjelenítés",
+        "description": "Mutasd be a tételeket nagy felbontású képekkel és részletes leírással."
+      },
+      "offlineExchange": {
+        "title": "Személyes átadás",
+        "description": "Tökéletes jótékonysági eseményekhez. Mi kezeljük a licitálást, te az átadást személyesen."
+      }
+    },
+    "useCases": {
+      "sectionTitle": "Tökéletes",
+      "sectionTitleHighlight": "minden alkalomra",
+      "sectionDescription": "Akár adománygyűjtésről, akár garázskiürítésről van szó, az Auktiva egyszerűvé teszi.",
+      "charity": {
+        "title": "Jótékonysági aukciók",
+        "description": "Szervezz csendes aukciókat nonprofit szervezeteknek, iskoláknak, egyházaknak és közösségi eseményekhez."
+      },
+      "declutter": {
+        "title": "Éves lomtalanítás",
+        "description": "Szabadulj meg a felesleges dolgoktól otthonodból vagy tárolódból, és hagyd, hogy barátaid licitáljanak rájuk."
+      },
+      "family": {
+        "title": "Barátok és család",
+        "description": "Privát aukciók családi összejövetelekhez, szomszédsági vásárokhoz vagy baráti köröknek."
+      },
+      "office": {
+        "title": "Irodai kiárusítás",
+        "description": "Cégek árverezhetik régi berendezéseiket, bútoraikat vagy promóciós tárgyaikat alkalmazottaiknak."
+      }
+    },
+    "howItWorks": {
+      "sectionTitle": "A beállítástól a",
+      "sectionTitleHighlight": "sikeres aukcióig",
+      "sectionDescription": "Négy egyszerű lépés az aukció lebonyolításához. Koncentrálj arra, ami fontos, mi kezeljük a licitálást.",
+      "step1": {
+        "title": "Aukció létrehozása",
+        "description": "Állítsd be az eseményt percek alatt testreszabható részletekkel és arculattal."
+      },
+      "step2": {
+        "title": "Vendégek meghívása",
+        "description": "Ossz meg egy privát linket vagy küldj e-mail meghívókat a résztvevőknek."
+      },
+      "step3": {
+        "title": "Élő licitálás",
+        "description": "A vendégek valós időben licitálnak a telefonjukról. Az izgalom fokozódik!"
+      },
+      "step4": {
+        "title": "Zárás",
+        "description": "Kezeld az átadást és elszámolást személyesen, ahogy neked kényelmes."
+      },
+      "step5": {
+        "title": "Ünneplés",
+        "description": "Ünnepeld a sikeredet a támogatóiddal és növeld az ügy ismertségét!"
+      },
+      "newBid": "Új licit!"
+    },
+    "impact": {
+      "sectionTitle": "Az elért eredmény,",
+      "sectionTitleHighlight": "összegyűjtve",
+      "sectionDescription": "Minden hozzájárulás számít. Nézd meg, hogyan állnak össze az egyéni adományok valódi segítséggé.",
+      "totalValue": "Teljes érték",
+      "itemsCollected": "Összegyűjtött tételek",
+      "exampleAuctionName": "Karácsonyi jótékonysági aukció",
+      "moreItems": "+{count}"
+    },
+    "cta": {
+      "title": "Készen állsz az aukció indítására?",
+      "description": "Legyen szó jótékonysági aukcióról vagy éves lomtalanításról, az Auktiva teljesen ingyenes. Nyílt forráskódú, díjmentes, és közösségeknek készült.",
+      "getStarted": "Kezdés",
+      "freeForever": "Ingyenes és mindig az is marad",
+      "selfHostTitle": "Saját szerveren futtatnád?",
+      "selfHostDescription": "Futtasd az Auktivát saját szervereden teljes adatkontrollal. Indítás egyetlen paranccsal.",
+      "seeDocumentation": "Lásd a <link>fejlesztői dokumentációt</link> további részletekért."
+    }
+  }
+}
