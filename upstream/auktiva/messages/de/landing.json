@@ -1,0 +1,113 @@
+{
+  "landing": {
+    "hero": {
+      "badge": "{version} ist jetzt live",
+      "title": "Auktionen",
+      "titleHighlight": "einfach & sozial",
+      "description": "100% kostenlose, Open-Source-Auktionsplattform für Wohltätigkeitsveranstaltungen und private Nutzung. Perfekt für jährliches Entrümpeln, Flohmärkte oder den Verkauf an Freunde. Keine Gebühren, keine Limits.",
+      "startAuction": "Starte deine Auktion",
+      "viewOnGithub": "Auf GitHub ansehen",
+      "demoAlt": "Interaktive Demo-Vorschau",
+      "bidNow": "Jetzt bieten",
+      "showDemo": "Demo ansehen",
+      "demoHint": "Klicke, um zu sehen wie Auktiva funktioniert",
+      "demoTitle": "Auktiva Demo",
+      "videoNotSupported": "Dein Browser unterstützt das Video-Element nicht.",
+      "close": "Schließen"
+    },
+    "features": {
+      "sectionTitle": "Alles, was du für eine",
+      "sectionTitleHighlight": "perfekte Auktion brauchst",
+      "sectionDescription": "Leistungsstarke Funktionen für Organisatoren und Bieter.",
+      "realTimeBidding": {
+        "title": "Echtzeit-Gebote",
+        "description": "Verfolge Gebote sofort mit unseren Live-Updates. Kein Neuladen erforderlich."
+      },
+      "privateSecure": {
+        "title": "Privat & Sicher",
+        "description": "Veranstalte Auktionen nur für Geladene mit rollenbasierter Zugriffskontrolle. Deine Daten bleiben privat."
+      },
+      "multiCurrency": {
+        "title": "Mehrere Währungen",
+        "description": "Unterstützung für globale Events mit automatischer Währungsformatierung für USD, EUR, GBP und mehr."
+      },
+      "smartNotifications": {
+        "title": "Intelligente Benachrichtigungen",
+        "description": "Werde sofort benachrichtigt, wenn du überboten wurdest oder beobachtete Artikel enden."
+      },
+      "richMedia": {
+        "title": "Rich Media",
+        "description": "Präsentiere Artikel mit hochauflösenden Bildergalerien und detaillierten Beschreibungen."
+      },
+      "offlineExchange": {
+        "title": "Offline-Übergabe",
+        "description": "Perfekt für Charity-Events. Wir kümmern uns um das Bieten, du dich um die Übergabe der Artikel vor Ort."
+      }
+    },
+    "useCases": {
+      "sectionTitle": "Perfekt für",
+      "sectionTitleHighlight": "jeden Anlass",
+      "sectionDescription": "Ob Spendensammlung oder Garagenverkauf, Auktiva macht es einfach.",
+      "charity": {
+        "title": "Wohltätigkeitsauktionen",
+        "description": "Veranstalte stille Auktionen für gemeinnützige Organisationen, Schulen, Kirchen und Gemeinschaftsevents."
+      },
+      "declutter": {
+        "title": "Jährliches Entrümpeln",
+        "description": "Räume ungenutzten Sachen aus deinem Zuhause oder Lager und lass Freunde darauf bieten."
+      },
+      "family": {
+        "title": "Freunde & Familie",
+        "description": "Private Auktionen für Familientreffen, Nachbarschaftsverkäufe oder Freundeskreise."
+      },
+      "office": {
+        "title": "Büroauflösungen",
+        "description": "Unternehmen können alte Ausrüstung, Möbel oder Werbeartikel an Mitarbeiter versteigern."
+      }
+    },
+    "howItWorks": {
+      "sectionTitle": "Von der Einrichtung zur",
+      "sectionTitleHighlight": "erfolgreichen Auktion",
+      "sectionDescription": "Vier einfache Schritte für deine Auktion. Konzentriere dich auf das Wesentliche, wir kümmern uns um die Gebote.",
+      "step1": {
+        "title": "Auktion erstellen",
+        "description": "Richte dein Event in Minuten mit anpassbaren Details und Branding ein."
+      },
+      "step2": {
+        "title": "Gäste einladen",
+        "description": "Teile einen privaten Link oder sende E-Mail-Einladungen an deine Teilnehmer."
+      },
+      "step3": {
+        "title": "Live-Gebote",
+        "description": "Gäste bieten in Echtzeit von ihren Handys. Die Spannung steigt!"
+      },
+      "step4": {
+        "title": "Abschluss",
+        "description": "Kümmmere dich um Übergabe und Abrechnung offline, auf deine Art."
+      },
+      "step5": {
+        "title": "Feiern",
+        "description": "Feiere deinen Erfolg mit deinen Unterstützern und schaffe Aufmerksamkeit für deinen Zweck!"
+      },
+      "newBid": "Neues Gebot!"
+    },
+    "impact": {
+      "sectionTitle": "Dein Einfluss,",
+      "sectionTitleHighlight": "Gesammelt",
+      "sectionDescription": "Jeder Beitrag zählt. Erlebe, wie einzelne Spenden zusammenkommen und Großes bewirken.",
+      "totalValue": "Gesamtwert",
+      "itemsCollected": "Gesammelte Artikel",
+      "exampleAuctionName": "Weihnachts-Spendenaktion",
+      "moreItems": "+{count}"
+    },
+    "cta": {
+      "title": "Bereit, deine Auktion zu starten?",
+      "description": "Ob Wohltätigkeitsauktion oder jährlicher Entrümpelungsverkauf, Auktiva ist komplett kostenlos. Open Source, keine Gebühren, für Gemeinschaften gebaut.",
+      "getStarted": "Loslegen",
+      "freeForever": "Es ist kostenlos und wird immer kostenlos bleiben",
+      "selfHostTitle": "Lieber selbst hosten?",
+      "selfHostDescription": "Betreibe Auktiva auf deinem eigenen Server mit voller Kontrolle über deine Daten. Ein Befehl zum Starten.",
+      "seeDocumentation": "Siehe die <link>Entwickler-Dokumentation</link> für mehr Details."
+    }
+  }
+}
