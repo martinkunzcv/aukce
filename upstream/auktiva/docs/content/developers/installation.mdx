@@ -1,0 +1,205 @@
+# Installation
+
+import { Callout } from "nextra/components";
+
+There are two ways to install Auktiva: using the automated installer or manual installation.
+
+## Requirements
+
+Before installing Auktiva, ensure you have:
+
+- **Node.js 20.x or higher** (LTS recommended)
+- **npm 10+** (comes with Node.js 20+)
+- **Git** for cloning the repository
+
+Check your Node.js version:
+
+```bash
+node --version
+```
+
+If you need to upgrade Node.js, download from [nodejs.org](https://nodejs.org/) or use a version manager:
+
+```bash
+# Using nvm (Node Version Manager)
+nvm install 20
+nvm use 20
+```
+
+The setup wizard will validate your Node.js version and provide instructions if it doesn't meet the requirements.
+
+## Automated Installation (Recommended)
+
+The easiest way to get started is using our one-line installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/thomsa/auktiva/main/scripts/install.sh | bash
+```
+
+This installs the latest stable release. For development/testing, you can install the latest commit from main:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/thomsa/auktiva/main/scripts/install.sh | bash -s -- --latest
+```
+
+<Callout type="warning">
+  The `--latest` flag installs unreleased code from the main branch which may be
+  unstable or contain breaking changes. Use only for development or testing.
+</Callout>
+
+This script will:
+
+1. Check for Node.js (20+) and Git
+2. Clone the repository to your current directory
+3. Install dependencies
+4. Launch an interactive setup wizard
+
+### Setup Wizard
+
+The setup wizard guides you through configuring:
+
+- **Storage**: Local filesystem or S3-compatible storage
+- **Database**: SQLite (local) or Turso (cloud)
+- **Authentication**: Generates secure secrets
+- **Feature flags**: Enable/disable open auctions
+
+After configuration, it automatically:
+
+1. Generates the Prisma client
+2. Pushes the database schema
+3. Seeds initial data (currencies)
+4. Builds the application
+5. Optionally installs and starts PM2
+
+## Manual Installation
+
+If you prefer manual setup:
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/thomsa/auktiva.git
+cd auktiva
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Environment
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your configuration. See [Configuration](/developers/configuration) for details.
+
+### 4. Set Up Database
+
+Generate the Prisma client:
+
+```bash
+npm run db:generate
+```
+
+Push the schema to your database:
+
+```bash
+npm run db:push
+```
+
+Seed initial data:
+
+```bash
+npm run seed:currencies
+```
+
+### 5. Build and Run
+
+For development:
+
+```bash
+npm run dev
+```
+
+For production:
+
+```bash
+npm run build
+npm start
+```
+
+## Verifying Installation
+
+After installation, open your browser to:
+
+- Development: `http://localhost:3000`
+- Production: Your configured `AUTH_URL`
+
+You should see the Auktiva landing page. Click "Get Started" to create your first account.
+
+## Installation Scripts Architecture
+
+Auktiva uses a two-stage installation process with two scripts that work together:
+
+### Stage 1: `scripts/install.sh` (Bootstrap)
+
+This is the entry point for fresh installations, run via `curl | bash`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/thomsa/auktiva/main/scripts/install.sh | bash
+```
+
+**Responsibilities:**
+
+- Validates prerequisites (Node.js 20+, npm, git)
+- Clones the repository
+- Installs npm dependencies
+- Launches the setup wizard (Stage 2)
+
+### Stage 2: `cli/setup.ts` (Configuration)
+
+The interactive setup wizard that configures your Auktiva instance:
+
+```bash
+npm run setup
+```
+
+**Responsibilities:**
+
+- Validates Node.js version (redundant check for direct invocation)
+- Guides through configuration (database, storage, auth, email)
+- Writes the `.env` file
+- Runs database migrations and seeds
+- Builds the application
+- Optionally sets up PM2 for process management
+
+### Installation Flows
+
+**Fresh install (new server):**
+
+```
+curl ... | bash → install.sh → npm install → setup.ts
+```
+
+**Reconfigure existing installation:**
+
+```
+npm run setup → setup.ts (directly)
+```
+
+Both scripts validate Node.js 20+ independently:
+
+- `install.sh` catches version issues early, before cloning/installing
+- `setup.ts` catches issues when someone runs `npm run setup` directly on an existing clone
+
+## Next Steps
+
+- [Configure your environment](/developers/configuration)
+- [Set up your database](/developers/database)
+- [Configure storage](/developers/storage)
+- [Deploy to production](/developers/deployment)

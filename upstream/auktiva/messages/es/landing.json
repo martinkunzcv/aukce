@@ -1,0 +1,113 @@
+{
+  "landing": {
+    "hero": {
+      "badge": "{version} ya está disponible",
+      "title": "Subastas hechas",
+      "titleHighlight": "simples y sociales",
+      "description": "Plataforma de subastas 100% gratuita y de código abierto para eventos benéficos y uso personal. Perfecta para limpiezas anuales, ventas de garaje o vender artículos a amigos. Sin comisiones, sin límites.",
+      "startAuction": "Empieza Tu Subasta",
+      "viewOnGithub": "Ver en GitHub",
+      "demoAlt": "Vista previa interactiva de demostración",
+      "bidNow": "Pujar Ahora",
+      "showDemo": "Ver demostración",
+      "demoHint": "Haz clic para ver cómo funciona Auktiva",
+      "demoTitle": "Demo de Auktiva",
+      "videoNotSupported": "Tu navegador no soporta el elemento de video.",
+      "close": "Cerrar"
+    },
+    "features": {
+      "sectionTitle": "Todo lo que necesitas para una",
+      "sectionTitleHighlight": "subasta perfecta",
+      "sectionDescription": "Funcionalidades potentes creadas tanto para organizadores como para pujadores.",
+      "realTimeBidding": {
+        "title": "Pujas en tiempo real",
+        "description": "Observa las pujas al instante con nuestras actualizaciones en vivo. No hace falta refrescar."
+      },
+      "privateSecure": {
+        "title": "Privado y Seguro",
+        "description": "Organiza subastas solo por invitación con control de acceso basado en roles. Tus datos permanecen privados."
+      },
+      "multiCurrency": {
+        "title": "Multimoneda",
+        "description": "Soporte para eventos globales con formato de moneda automático para USD, EUR, GBP y más."
+      },
+      "smartNotifications": {
+        "title": "Notificaciones Inteligentes",
+        "description": "Recibe notificaciones inmediatas cuando te superen en una puja o cuando los artículos que sigues estén por terminar."
+      },
+      "richMedia": {
+        "title": "Multimedia",
+        "description": "Muestra artículos con galerías de imágenes de alta resolución y descripciones detalladas."
+      },
+      "offlineExchange": {
+        "title": "Intercambio Offline",
+        "description": "Perfecto para eventos benéficos. Nosotros gestionamos las pujas, tú gestionas el intercambio de artículos offline."
+      }
+    },
+    "useCases": {
+      "sectionTitle": "Perfecto para",
+      "sectionTitleHighlight": "cualquier ocasión",
+      "sectionDescription": "Ya sea para recaudar fondos o limpiar tu garaje, Auktiva lo hace simple.",
+      "charity": {
+        "title": "Subastas Benéficas",
+        "description": "Organiza subastas silenciosas para organizaciones sin fines de lucro, escuelas, iglesias y eventos comunitarios."
+      },
+      "declutter": {
+        "title": "Limpieza Anual",
+        "description": "Deshazte de artículos no usados de tu casa o almacén y deja que tus amigos pujen por ellos."
+      },
+      "family": {
+        "title": "Amigos y Familia",
+        "description": "Subastas privadas para reuniones familiares, ventas de vecindario o grupos de amigos."
+      },
+      "office": {
+        "title": "Liquidaciones de Oficina",
+        "description": "Las empresas pueden subastar equipos viejos, muebles o artículos promocionales a sus empleados."
+      }
+    },
+    "howItWorks": {
+      "sectionTitle": "Desde la configuración hasta",
+      "sectionTitleHighlight": "una subasta exitosa",
+      "sectionDescription": "Cuatro pasos simples para realizar tu subasta. Concéntrate en lo importante, nosotros nos encargamos de las pujas.",
+      "step1": {
+        "title": "Crear Subasta",
+        "description": "Configura tu evento en minutos con detalles y marca personalizables."
+      },
+      "step2": {
+        "title": "Invitar Invitados",
+        "description": "Comparte un enlace privado o envía invitaciones por correo a tus participantes."
+      },
+      "step3": {
+        "title": "Pujas en Vivo",
+        "description": "Los invitados pujan en tiempo real desde sus teléfonos. ¡Crece la emoción!"
+      },
+      "step4": {
+        "title": "Finalización",
+        "description": "Gestiona el intercambio y el pago offline, a tu manera."
+      },
+      "step5": {
+        "title": "Celebrar",
+        "description": "¡Celebra tu éxito con tus contribuyentes y crea conciencia sobre tu causa!"
+      },
+      "newBid": "¡Nueva Puja!"
+    },
+    "impact": {
+      "sectionTitle": "Tu Impacto,",
+      "sectionTitleHighlight": "Recaudado",
+      "sectionDescription": "Cada contribución cuenta. Mira cómo las donaciones individuales se suman para llenar el frasco de oportunidades.",
+      "totalValue": "Valor Total",
+      "itemsCollected": "Artículos Recolectados",
+      "exampleAuctionName": "Recaudación de Navidad",
+      "moreItems": "+{count}"
+    },
+    "cta": {
+      "title": "¿Listo para empezar tu subasta?",
+      "description": "Ya sea una subasta benéfica o una venta de limpieza anual, Auktiva es completamente gratis. Código abierto, sin comisiones, creado para comunidades.",
+      "getStarted": "Empezar",
+      "freeForever": "Es gratis y siempre será gratis",
+      "selfHostTitle": "¿Prefieres alojarlo tú mismo?",
+      "selfHostDescription": "Ejecuta Auktiva en tu propio servidor con control total sobre tus datos. Un comando para empezar.",
+      "seeDocumentation": "Mira la <link>documentación para desarrolladores</link> para más detalles."
+    }
+  }
+}

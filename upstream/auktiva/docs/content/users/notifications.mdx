@@ -1,0 +1,88 @@
+# Notifications
+
+Stay informed about auction activity with Auktiva's notification system.
+
+## Notification Types
+
+### New Item Added
+
+When a new item is added to an auction you're a member of. Shows the item name, a preview of the description, and the item's image.
+
+### Outbid Notifications
+
+When someone places a higher bid than yours.
+
+### Auction Ending Soon
+
+When an auction you're in is about to end.
+
+### Item Won
+
+When an item you bid on ends and you won.
+
+### Item Lost
+
+When an item you bid on ends and someone else won.
+
+## Accessing Notifications
+
+### Notification Bell
+
+The bell icon in the top navigation shows:
+
+- Red badge with unread count
+- Click to open dropdown
+- Recent notifications
+
+### Notification Dropdown
+
+- Unread notifications are highlighted
+- Click a notification to go to the item
+- Click "Mark all as read" to clear
+
+## Real-Time Updates
+
+Notifications update automatically:
+
+- New notifications appear without refreshing
+- Badge count updates in real-time
+- Polling interval: every 30 seconds
+
+import { Callout } from "nextra/components";
+
+<Callout type="info">
+  You don't need to refresh the page to see new notifications.
+</Callout>
+
+## Email Notifications
+
+In addition to in-app notifications, Auktiva can send you email notifications for important events.
+
+### Email Types
+
+- **Welcome Email** - Sent when you create your account
+- **Auction Invites** - When someone invites you to an auction
+- **New Items** - When items are added to auctions you're in
+- **Outbid Alerts** - When someone outbids you
+
+### Managing Email Preferences
+
+You can control email notifications in **Settings → Email Notifications**:
+
+1. Go to Settings
+2. Find "Email Notifications" section
+3. Toggle notifications on/off:
+   - **New item notifications** - Emails for new auction items
+   - **Outbid notifications** - Emails when you're outbid
+
+<Callout type="info">
+  Disabling email notifications doesn't affect in-app notifications. You'll
+  still see the bell icon updates.
+</Callout>
+
+## Best Practices
+
+- Check notifications regularly during active auctions
+- Pay attention to outbid notifications
+- Watch for auction ending reminders
+- Enable email notifications for auctions you care about

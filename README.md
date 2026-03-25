@@ -96,12 +96,13 @@ docker compose up -d
 Postup je v `keycloak/README.md`.
 
 Minimum:
-- vytvořit realm `company-auctions`,
+- realm `company-auctions` se při startu Keycloaku importuje automaticky ze souboru `keycloak/company-auctions-realm.json`,
+- po prvním startu jen zkontrolovat, že byl import úspěšný,
+- upravit client secret `webid` z placeholderu `replace-me` na reálnou hodnotu a zapsat stejnou hodnotu do `.env` jako `OAUTH2_PROXY_CLIENT_SECRET`,
 - napojit AD přes LDAP/User Federation,
-- vytvořit client `webid`,
-- nastavit redirect URI na `http://localhost:8080/oauth2/callback`,
-- vytvořit role `employee_bidder`, `auction_admin`, `auction_approver`,
-- namapovat role do claimů posílaných přes oauth2-proxy.
+- podle potřeby upravit redirect URI / web origin,
+- role `employee_bidder`, `auction_admin`, `auction_approver` jsou součástí importu,
+- mapper pro realm roles do claimu `groups` je součástí importu.
 
 ### 5.4 Proč padal `oauth2-proxy`
 

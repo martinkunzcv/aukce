@@ -1,0 +1,178 @@
+# Authentication
+
+Auktiva uses [NextAuth.js](https://next-auth.js.org/) v4 for authentication, supporting both credentials-based login and OAuth providers (Google).
+
+## Configuration
+
+### Required Environment Variables
+
+```bash
+# Secret key for encrypting sessions
+AUTH_SECRET="your-secret-key-here"
+
+# Base URL of your application
+AUTH_URL="http://localhost:3000"
+```
+
+### Generating AUTH_SECRET
+
+Always generate a unique, random secret for production:
+
+```bash
+# Using OpenSSL
+openssl rand -base64 32
+
+# Using Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+import { Callout } from "nextra/components";
+
+<Callout type="error">
+  Never use the example secret in production. Always generate a unique value.
+</Callout>
+
+## Google OAuth (Optional)
+
+Auktiva supports Google OAuth for seamless sign-in. When enabled, users can sign up/login with their Google account.
+
+### Setting Up Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services** → **Credentials**
+4. Click **Create Credentials** → **OAuth client ID**
+5. Select **Web application** as the application type
+6. Add authorized redirect URIs:
+   - Development: `http://localhost:3000/api/auth/callback/google`
+   - Production: `https://yourdomain.com/api/auth/callback/google`
+7. Copy the **Client ID** and **Client Secret**
+
+### Environment Variables
+
+```bash
+# Google OAuth credentials
+GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+```
+
+<Callout type="info">
+  Google OAuth is optional. If these variables are not set, the Google sign-in
+  button will not appear on login/register pages.
+</Callout>
+
+### How Google OAuth Works
+
+1. User clicks "Continue with Google"
+2. User authenticates with Google
+3. Auktiva receives user profile (email, name, avatar)
+4. If email exists → account is linked automatically
+5. If email is new → new user is created (no password required)
+
+### Account Linking
+
+When a user signs in with Google:
+
+- **New email**: Creates a new account with Google profile data
+- **Existing email**: Links Google to the existing account
+- **Already linked**: Signs in normally
+
+Users can view their connected accounts in **Settings** → **Connected Accounts**.
+
+## Microsoft OAuth (Optional)
+
+Auktiva supports Microsoft OAuth (Azure AD) for seamless sign-in with personal Microsoft accounts and work/school accounts.
+
+### Setting Up Microsoft OAuth
+
+1. Go to [Azure Portal](https://portal.azure.com/)
+2. Navigate to **Azure Active Directory** → **App registrations** → **New registration**
+3. Configure your app:
+   - **Name**: Your app name (e.g., "Auktiva")
+   - **Supported account types**: Select "Accounts in any organizational directory and personal Microsoft accounts"
+   - **Redirect URI**: Select "Web" platform
+4. Add redirect URIs:
+   - Development: `http://localhost:3000/api/auth/callback/azure-ad`
+   - Production: `https://yourdomain.com/api/auth/callback/azure-ad`
+5. After creation, copy the **Application (client) ID**
+6. Go to **Certificates & secrets** → **New client secret**
+7. Copy the secret **Value** (not the Secret ID)
+
+### Environment Variables
+
+```bash
+# Microsoft OAuth credentials
+MICROSOFT_CLIENT_ID="your-application-client-id"
+MICROSOFT_CLIENT_SECRET="your-client-secret-value"
+```
+
+<Callout type="info">
+  Microsoft OAuth is optional. If these variables are not set, the Microsoft
+  sign-in button will not appear on login/register pages.
+</Callout>
+
+### How Microsoft OAuth Works
+
+1. User clicks "Continue with Microsoft"
+2. User authenticates with their Microsoft account
+3. Auktiva receives user profile (email, name, avatar)
+4. If email exists → account is linked automatically
+5. If email is new → new user is created (no password required)
+
+## How It Works
+
+### Registration (Email/Password)
+
+1. User submits email, name, and password
+2. Password is hashed using bcrypt (12 rounds)
+3. User record is created in the database
+4. User redirected to login
+
+### Registration (OAuth - Google/Microsoft)
+
+1. User clicks "Continue with Google" or "Continue with Microsoft"
+2. Provider authenticates and returns profile
+3. User and Account records are created
+4. Session is created automatically
+
+### Login (Email/Password)
+
+1. User submits email and password
+2. Password is verified against stored hash
+3. JWT token is created
+4. Session cookie is set in browser
+
+### Login (OAuth - Google/Microsoft)
+
+1. User clicks OAuth provider button
+2. Provider authenticates user
+3. Account is verified/linked
+4. JWT token is created
+
+### Sessions
+
+- Sessions use JWT strategy (token-based, not database-stored)
+- JWT token is stored in an HTTP-only cookie
+- Sessions expire after 30 days by default
+
+## Security Features
+
+- **Password hashing** with bcrypt (12 rounds)
+- **CSRF protection** via NextAuth
+- **HTTP-only cookies** for JWT tokens
+- **JWT-based sessions** for stateless authentication
+
+## Session Data
+
+The session object contains:
+
+```ts
+{
+  user: {
+    id: string;      // User's database ID
+    name: string;    // User's display name
+    email: string;   // User's email address
+  },
+  expires: string;   // Session expiration date
+}
+```
