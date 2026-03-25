@@ -5,6 +5,7 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { queueWelcomeEmail } from "@/lib/email/service";
+import { featureFlags } from "@/lib/config/features";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -13,50 +14,54 @@ const loginSchema = z.object({
 });
 
 // Build providers array dynamically based on env vars
-const providers: NextAuthOptions["providers"] = [
-  CredentialsProvider({
-    name: "credentials",
-    credentials: {
-      email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" },
-    },
-    async authorize(credentials) {
-      const parsed = loginSchema.safeParse(credentials);
+const providers: NextAuthOptions["providers"] = [];
 
-      if (!parsed.success) {
-        return null;
-      }
+if (!featureFlags.disableCredentialsAuth) {
+  providers.push(
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const parsed = loginSchema.safeParse(credentials);
 
-      const { email, password } = parsed.data;
+        if (!parsed.success) {
+          return null;
+        }
 
-      const user = await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
-      });
+        const { email, password } = parsed.data;
 
-      if (!user || !user.passwordHash) {
-        return null;
-      }
+        const user = await prisma.user.findUnique({
+          where: { email: email.toLowerCase() },
+        });
 
-      const isValidPassword = await compare(password, user.passwordHash);
+        if (!user || !user.passwordHash) {
+          return null;
+        }
 
-      if (!isValidPassword) {
-        return null;
-      }
+        const isValidPassword = await compare(password, user.passwordHash);
 
-      // Check if email is verified (only for credential users, not OAuth)
-      if (!user.emailVerified) {
-        // Throw a specific error that the frontend can detect
-        throw new Error("EMAIL_NOT_VERIFIED");
-      }
+        if (!isValidPassword) {
+          return null;
+        }
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      };
-    },
-  }),
-];
+        // Check if email is verified (only for credential users, not OAuth)
+        if (!user.emailVerified) {
+          // Throw a specific error that the frontend can detect
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        };
+      },
+    }),
+  );
+}
 
 // Add Google provider if credentials are configured
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
