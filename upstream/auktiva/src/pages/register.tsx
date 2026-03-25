@@ -10,6 +10,7 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { MicrosoftSignInButton } from "@/components/auth/microsoft-sign-in-button";
 import { getMessages, Locale } from "@/i18n";
 import { useTranslations } from "next-intl";
+import { featureFlags } from "@/lib/config/features";
 
 const LazyReCAPTCHA = lazy(() => import("react-google-recaptcha"));
 
@@ -434,6 +435,15 @@ export default function RegisterPage({
 export const getServerSideProps: GetServerSideProps<RegisterPageProps> = async (
   context,
 ) => {
+  if (featureFlags.disablePublicRegistration) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
   const session = await getServerSession(context.req, context.res, authOptions);
 
   if (session) {

@@ -12,13 +12,18 @@ import { MicrosoftSignInButton } from "@/components/auth/microsoft-sign-in-butto
 import { getMessages, Locale } from "@/i18n";
 import { useTranslations } from "next-intl";
 import { getSafeRedirectUrl } from "@/utils/auth-redirect";
+import { featureFlags } from "@/lib/config/features";
 
 interface LoginPageProps {
+  credentialsEnabled: boolean;
+  publicRegistrationEnabled: boolean;
   googleOAuthEnabled: boolean;
   microsoftOAuthEnabled: boolean;
 }
 
 export default function LoginPage({
+  credentialsEnabled,
+  publicRegistrationEnabled,
   googleOAuthEnabled,
   microsoftOAuthEnabled,
 }: LoginPageProps) {
@@ -142,126 +147,128 @@ export default function LoginPage({
               <p className="text-base-content/60">{t("subtitle")}</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && <AlertMessage type="error">{error}</AlertMessage>}
+            {credentialsEnabled && (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && <AlertMessage type="error">{error}</AlertMessage>}
 
-              {emailNotVerified && (
-                <div className="alert alert-warning">
-                  <span className="icon-[tabler--mail-exclamation] size-5"></span>
-                  <div className="flex flex-col gap-2">
-                    <span>{t("emailNotVerified")}</span>
-                    {resendStatus === "sent" ? (
-                      <span className="text-sm opacity-80">
-                        {t("verificationEmailSent")}
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        className="link link-hover text-sm text-left"
-                        disabled={resendStatus === "sending"}
-                        onClick={async () => {
-                          setResendStatus("sending");
-                          try {
-                            const res = await fetch(
-                              "/api/auth/resend-verification",
-                              {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ email: loginEmail }),
-                              },
-                            );
-                            if (res.ok) {
-                              setResendStatus("sent");
-                            } else {
+                {emailNotVerified && (
+                  <div className="alert alert-warning">
+                    <span className="icon-[tabler--mail-exclamation] size-5"></span>
+                    <div className="flex flex-col gap-2">
+                      <span>{t("emailNotVerified")}</span>
+                      {resendStatus === "sent" ? (
+                        <span className="text-sm opacity-80">
+                          {t("verificationEmailSent")}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="link link-hover text-sm text-left"
+                          disabled={resendStatus === "sending"}
+                          onClick={async () => {
+                            setResendStatus("sending");
+                            try {
+                              const res = await fetch(
+                                "/api/auth/resend-verification",
+                                {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ email: loginEmail }),
+                                },
+                              );
+                              if (res.ok) {
+                                setResendStatus("sent");
+                              } else {
+                                setResendStatus("error");
+                              }
+                            } catch {
                               setResendStatus("error");
                             }
-                          } catch {
-                            setResendStatus("error");
-                          }
-                        }}
+                          }}
+                        >
+                          {resendStatus === "sending"
+                            ? t("resendingVerification")
+                            : t("resendVerificationEmail")}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {router.query.verified && (
+                  <AlertMessage type="success">
+                    {t("emailVerifiedSuccess")}
+                  </AlertMessage>
+                )}
+
+                {router.query.registered && (
+                  <AlertMessage type="success">
+                    {t("accountCreatedSuccess")}
+                  </AlertMessage>
+                )}
+
+                <div className="space-y-4">
+                  <div className="form-control">
+                    <label className="label pl-0" htmlFor="email">
+                      <span className="label-text font-medium text-base-content/80">
+                        {t("email")}
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 icon-[tabler--mail] size-5"></span>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder={t("emailPlaceholder")}
+                        autoComplete="email"
+                        className="input input-bordered w-full pl-10 bg-base-200/50 focus:bg-base-100 transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label pl-0" htmlFor="password">
+                      <span className="label-text font-medium text-base-content/80">
+                        {t("password")}
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 icon-[tabler--lock] size-5"></span>
+                      <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder={t("passwordPlaceholder")}
+                        autoComplete="current-password"
+                        className="input input-bordered w-full pl-10 bg-base-200/50 focus:bg-base-100 transition-colors"
+                        required
+                      />
+                    </div>
+                    <label className="label pb-0">
+                      <Link
+                        href="/forgot-password"
+                        className="label-text-alt link link-primary hover:text-primary/80 transition-colors ml-auto"
                       >
-                        {resendStatus === "sending"
-                          ? t("resendingVerification")
-                          : t("resendVerificationEmail")}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {router.query.verified && (
-                <AlertMessage type="success">
-                  {t("emailVerifiedSuccess")}
-                </AlertMessage>
-              )}
-
-              {router.query.registered && (
-                <AlertMessage type="success">
-                  {t("accountCreatedSuccess")}
-                </AlertMessage>
-              )}
-
-              <div className="space-y-4">
-                <div className="form-control">
-                  <label className="label pl-0" htmlFor="email">
-                    <span className="label-text font-medium text-base-content/80">
-                      {t("email")}
-                    </span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 icon-[tabler--mail] size-5"></span>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder={t("emailPlaceholder")}
-                      autoComplete="email"
-                      className="input input-bordered w-full pl-10 bg-base-200/50 focus:bg-base-100 transition-colors"
-                      required
-                    />
+                        {t("forgotPassword")}
+                      </Link>
+                    </label>
                   </div>
                 </div>
 
-                <div className="form-control">
-                  <label className="label pl-0" htmlFor="password">
-                    <span className="label-text font-medium text-base-content/80">
-                      {t("password")}
-                    </span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 icon-[tabler--lock] size-5"></span>
-                    <input
-                      id="password"
-                      name="password"
-                      type="password"
-                      placeholder={t("passwordPlaceholder")}
-                      autoComplete="current-password"
-                      className="input input-bordered w-full pl-10 bg-base-200/50 focus:bg-base-100 transition-colors"
-                      required
-                    />
-                  </div>
-                  <label className="label pb-0">
-                    <Link
-                      href="/forgot-password"
-                      className="label-text-alt link link-primary hover:text-primary/80 transition-colors ml-auto"
-                    >
-                      {t("forgotPassword")}
-                    </Link>
-                  </label>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                modifier="block"
-                isLoading={isLoading}
-                loadingText={t("submitting")}
-                className="btn-lg text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:-translate-y-0.5"
-              >
-                {t("submitButton")}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  modifier="block"
+                  isLoading={isLoading}
+                  loadingText={t("submitting")}
+                  className="btn-lg text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:-translate-y-0.5"
+                >
+                  {t("submitButton")}
+                </Button>
+              </form>
+            )}
 
             {(googleOAuthEnabled || microsoftOAuthEnabled) && (
               <>
@@ -285,17 +292,19 @@ export default function LoginPage({
               </>
             )}
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-base-content/60">
-                {t("noAccount")}{" "}
-                <Link
-                  href="/register"
-                  className="link link-primary font-bold hover:text-primary/80 transition-colors"
-                >
-                  {t("createAccount")}
-                </Link>
-              </p>
-            </div>
+            {publicRegistrationEnabled && (
+              <div className="mt-8 text-center">
+                <p className="text-sm text-base-content/60">
+                  {t("noAccount")}{" "}
+                  <Link
+                    href="/register"
+                    className="link link-primary font-bold hover:text-primary/80 transition-colors"
+                  >
+                    {t("createAccount")}
+                  </Link>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -324,10 +333,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const microsoftOAuthEnabled = !!(
     process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET
   );
+  const credentialsEnabled = !featureFlags.disableCredentialsAuth;
+  const publicRegistrationEnabled = !featureFlags.disablePublicRegistration;
 
   return {
     props: {
       messages,
+      credentialsEnabled,
+      publicRegistrationEnabled,
       googleOAuthEnabled,
       microsoftOAuthEnabled,
     },
