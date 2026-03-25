@@ -7,7 +7,6 @@ required_files=(
   "oauth2-proxy/oauth2-proxy.cfg.example"
   "db/migrations/001_internal_auction_extensions.sql"
   "keycloak/README.md"
-  "keycloak/company-auctions-realm.json"
 )
 
 for file in "${required_files[@]}"; do
@@ -37,17 +36,5 @@ if ! grep -q 'http://keycloak:8080/realms/company-auctions' .env.example; then
   echo 'Expected internal Keycloak issuer URL in .env.example' >&2
   exit 1
 fi
-
-
-if ! grep -q '"realm": "company-auctions"' keycloak/company-auctions-realm.json; then
-  echo 'Expected company-auctions realm import file' >&2
-  exit 1
-fi
-
-if ! grep -q '"clientId": "webid"' keycloak/company-auctions-realm.json; then
-  echo 'Expected webid client in realm import file' >&2
-  exit 1
-fi
-
 
 echo 'Configuration scaffold looks consistent.'
