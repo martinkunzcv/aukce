@@ -1,0 +1,299 @@
+# Configuration
+
+Auktiva is configured through environment variables in a `.env` file. This page documents all available options.
+
+## Environment File
+
+Create a `.env` file in the project root by copying the example:
+
+```bash
+cp .env.example .env
+```
+
+## Required Variables
+
+### Database
+
+```bash
+# SQLite (local file)
+DATABASE_URL="file:./data/auktiva.db"
+
+# OR Turso (cloud database)
+DATABASE_URL="libsql://your-database.turso.io"
+DATABASE_AUTH_TOKEN="your-turso-auth-token"
+```
+
+See [Database Configuration](/developers/database) for detailed setup instructions.
+
+### Authentication
+
+```bash
+# Secret key for encrypting sessions (generate with: openssl rand -base64 32)
+AUTH_SECRET="your-secret-key-here"
+
+# Base URL of your application
+AUTH_URL="http://localhost:3000"
+```
+
+import { Callout } from "nextra/components";
+
+<Callout type="warning">
+  Always generate a unique `AUTH_SECRET` for production. Never use the example
+  value.
+</Callout>
+
+## Storage Configuration
+
+### Local Storage (Default)
+
+```bash
+STORAGE_PROVIDER="local"
+```
+
+Local storage uses `./public/uploads` automatically (served at `/uploads`). No additional configuration needed.
+
+### S3-Compatible Storage
+
+```bash
+STORAGE_PROVIDER="s3"
+S3_BUCKET="your-bucket-name"
+S3_REGION="us-east-1"
+S3_ACCESS_KEY_ID="your-access-key"
+S3_SECRET_ACCESS_KEY="your-secret-key"
+
+# Optional: Custom endpoint for S3-compatible services (MinIO, Cloudflare R2, etc.)
+S3_ENDPOINT="https://your-endpoint.com"
+
+# Optional: Custom public URL for serving files
+S3_PUBLIC_URL="https://cdn.yourdomain.com"
+```
+
+See [Storage Configuration](/developers/storage) for detailed setup instructions.
+
+## Email Configuration (Optional)
+
+Auktiva supports three email providers: **Brevo** (cloud service), **SMTP** (any SMTP server), and **Amazon SES** (AWS native).
+
+### Common Settings
+
+```bash
+# Provider selection: "brevo", "smtp", or "ses"
+EMAIL_PROVIDER="brevo"
+
+# Sender email and name
+MAIL_FROM="noreply@yourdomain.com"
+MAIL_FROM_NAME="Auktiva"
+
+# App URL for links in emails
+NEXT_PUBLIC_APP_URL="https://yourdomain.com"
+
+# Secret for securing the email retry cron endpoint
+CRON_SECRET="generate-with-openssl-rand-base64-32"
+```
+
+### Option 1: Brevo
+
+[Brevo](https://www.brevo.com/) (formerly Sendinblue) offers a free tier with **300 emails/day**.
+
+```bash
+EMAIL_PROVIDER="brevo"
+BREVO_API_KEY="your-brevo-api-key"  # Get from https://app.brevo.com/settings/keys/api
+```
+
+### Option 2: SMTP
+
+Use any SMTP server (Gmail, Mailgun, Amazon SES SMTP, self-hosted, etc.).
+
+```bash
+EMAIL_PROVIDER="smtp"
+SMTP_HOST="smtp.example.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"  # true for port 465 (implicit TLS), false for STARTTLS
+SMTP_USER="your-username"  # Optional, omit for no authentication
+SMTP_PASSWORD="your-password"  # Optional
+```
+
+**Common SMTP configurations:**
+
+| Provider        | Host                               | Port | Secure |
+| --------------- | ---------------------------------- | ---- | ------ |
+| Gmail           | smtp.gmail.com                     | 587  | false  |
+| Mailgun         | smtp.mailgun.org                   | 587  | false  |
+| Amazon SES      | email-smtp.us-east-1.amazonaws.com | 587  | false  |
+| SendGrid        | smtp.sendgrid.net                  | 587  | false  |
+| Local (Mailpit) | localhost                          | 1025 | false  |
+
+<Callout type="info">
+  For local development, you can use [Mailpit](https://mailpit.axllent.org/) or
+  similar tools to capture emails without authentication.
+</Callout>
+
+### Option 3: Amazon SES (API)
+
+Use the AWS SDK for native SES integration. This is the recommended approach for AWS deployments.
+
+```bash
+EMAIL_PROVIDER="ses"
+AWS_SES_REGION="us-east-1"
+AWS_SES_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"  # Optional with IAM roles
+AWS_SES_SECRET_ACCESS_KEY="wJalrXUtnFEMI/..."  # Optional with IAM roles
+AWS_SES_CONFIGURATION_SET="my-tracking-set"  # Optional
+```
+
+<Callout type="info">
+  On EC2, Lambda, or ECS with an IAM role attached, you can omit the access key
+  and secret. The SDK will automatically use the instance/task role credentials.
+</Callout>
+
+### Amazon SES: API vs SMTP
+
+Amazon SES can be used in two ways with Auktiva. Here's a comparison to help you choose:
+
+| Feature                | SES API (`EMAIL_PROVIDER="ses"`)    | SES SMTP (`EMAIL_PROVIDER="smtp"`)         |
+| ---------------------- | ----------------------------------- | ------------------------------------------ |
+| **Setup complexity**   | Simpler (just region + credentials) | Requires SMTP credentials from SES console |
+| **IAM role support**   | Yes (automatic on EC2/Lambda/ECS)   | No (always needs explicit credentials)     |
+| **Performance**        | Faster (direct API call)            | Slightly slower (SMTP handshake overhead)  |
+| **Configuration sets** | Native support                      | Not supported                              |
+| **Error messages**     | Detailed AWS error codes            | Generic SMTP errors                        |
+| **Dependencies**       | Requires `@aws-sdk/client-ses`      | Uses existing `nodemailer`                 |
+| **Portability**        | AWS-specific                        | Can switch to any SMTP provider            |
+
+**Recommendation:**
+
+- Use **SES API** (`EMAIL_PROVIDER="ses"`) if you're committed to AWS and want the best performance, IAM role support, or need configuration sets for tracking.
+- Use **SES SMTP** (`EMAIL_PROVIDER="smtp"`) if you want flexibility to switch providers later or prefer a simpler, provider-agnostic setup.
+
+### Email Types
+
+When configured, Auktiva sends:
+
+- **Welcome emails** - On user registration
+- **Auction invites** - When users are invited to auctions
+- **New item notifications** - When items are added (user can disable)
+- **Outbid notifications** - When someone outbids a user (user can disable)
+
+### Email Retry System
+
+Failed emails are logged to the database and automatically retried via a cron job at `/api/cron/retry-emails`. On Vercel, this runs every 15 minutes. The system retries up to 5 times before abandoning.
+
+<Callout type="info">
+  Email is optional. If `EMAIL_PROVIDER` is not set, no emails will be sent and
+  the app will function normally.
+</Callout>
+
+## Google OAuth (Optional)
+
+Enable Google sign-in for your users. See [Authentication](/developers/authentication) for detailed setup instructions.
+
+```bash
+# Google OAuth credentials (from Google Cloud Console)
+GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-client-secret"
+```
+
+<Callout type="info">
+  Google OAuth is optional. If not configured, users can still register and
+  login with email/password. The Google sign-in button only appears when these
+  variables are set.
+</Callout>
+
+## Microsoft OAuth (Optional)
+
+Enable Microsoft sign-in for your users. See [Authentication](/developers/authentication) for detailed setup instructions.
+
+```bash
+# Microsoft OAuth credentials (from Azure Portal)
+MICROSOFT_CLIENT_ID="your-application-client-id"
+MICROSOFT_CLIENT_SECRET="your-client-secret-value"
+```
+
+<Callout type="info">
+  Microsoft OAuth is optional. If not configured, users can still register and
+  login with email/password. The Microsoft sign-in button only appears when
+  these variables are set.
+</Callout>
+
+## Feature Flags
+
+```bash
+# Allow users to create open (public) auctions
+ALLOW_OPEN_AUCTIONS="true"
+```
+
+## All Environment Variables
+
+| Variable                    | Required   | Default               | Description                                |
+| --------------------------- | ---------- | --------------------- | ------------------------------------------ |
+| `DATABASE_URL`              | Yes        | -                     | Database connection string                 |
+| `DATABASE_AUTH_TOKEN`       | Turso only | -                     | Turso authentication token                 |
+| `AUTH_SECRET`               | Yes        | -                     | Session encryption secret                  |
+| `AUTH_URL`                  | Yes        | -                     | Application base URL                       |
+| `GOOGLE_CLIENT_ID`          | No         | -                     | Google OAuth client ID                     |
+| `GOOGLE_CLIENT_SECRET`      | No         | -                     | Google OAuth client secret                 |
+| `MICROSOFT_CLIENT_ID`       | No         | -                     | Microsoft OAuth client ID                  |
+| `MICROSOFT_CLIENT_SECRET`   | No         | -                     | Microsoft OAuth client secret              |
+| `STORAGE_PROVIDER`          | No         | `local`               | Storage provider (`local` or `s3`)         |
+| `S3_BUCKET`                 | S3 only    | -                     | S3 bucket name                             |
+| `S3_REGION`                 | S3 only    | -                     | S3 region                                  |
+| `S3_ACCESS_KEY_ID`          | S3 only    | -                     | S3 access key                              |
+| `S3_SECRET_ACCESS_KEY`      | S3 only    | -                     | S3 secret key                              |
+| `S3_ENDPOINT`               | No         | -                     | Custom S3 endpoint                         |
+| `S3_PUBLIC_URL`             | No         | -                     | Custom public URL for files                |
+| `EMAIL_PROVIDER`            | No         | -                     | Email provider (`brevo`, `smtp`, or `ses`) |
+| `BREVO_API_KEY`             | Brevo only | -                     | Brevo API key for emails                   |
+| `SMTP_HOST`                 | SMTP only  | -                     | SMTP server hostname                       |
+| `SMTP_PORT`                 | SMTP only  | `587`                 | SMTP server port                           |
+| `SMTP_SECURE`               | SMTP only  | `false`               | Use implicit TLS (port 465)                |
+| `SMTP_USER`                 | No         | -                     | SMTP username (optional)                   |
+| `SMTP_PASSWORD`             | No         | -                     | SMTP password (optional)                   |
+| `AWS_SES_REGION`            | SES only   | -                     | AWS region for SES                         |
+| `AWS_SES_ACCESS_KEY_ID`     | No         | -                     | AWS access key (optional with IAM)         |
+| `AWS_SES_SECRET_ACCESS_KEY` | No         | -                     | AWS secret key (optional with IAM)         |
+| `AWS_SES_CONFIGURATION_SET` | No         | -                     | SES configuration set name                 |
+| `MAIL_FROM`                 | No         | `noreply@auktiva.org` | Sender email address                       |
+| `MAIL_FROM_NAME`            | No         | `Auktiva.org`         | Sender display name                        |
+| `NEXT_PUBLIC_APP_URL`       | No         | -                     | App URL for email links                    |
+| `CRON_SECRET`               | No         | -                     | Secret for cron endpoint auth              |
+| `ALLOW_OPEN_AUCTIONS`       | No         | `false`               | Enable open auction creation               |
+
+## Example Configurations
+
+### Development (SQLite + Local Storage)
+
+```bash
+DATABASE_URL="file:./data/dev.db"
+AUTH_SECRET="dev-secret-change-in-production"
+AUTH_URL="http://localhost:3000"
+STORAGE_PROVIDER="local"
+ALLOW_OPEN_AUCTIONS="true"
+```
+
+### Production (Turso + S3)
+
+```bash
+DATABASE_URL="libsql://myapp-myorg.turso.io"
+DATABASE_AUTH_TOKEN="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
+AUTH_SECRET="generated-with-openssl-rand-base64-32"
+AUTH_URL="https://auctions.mydomain.com"
+STORAGE_PROVIDER="s3"
+S3_BUCKET="myapp-uploads"
+S3_REGION="us-east-1"
+S3_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+S3_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+ALLOW_OPEN_AUCTIONS="false"
+```
+
+## Generating Secrets
+
+Generate a secure `AUTH_SECRET`:
+
+```bash
+openssl rand -base64 32
+```
+
+Or using Node.js:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```

@@ -1,0 +1,62 @@
+{
+  "realm": "company-auctions",
+  "enabled": true,
+  "displayName": "Company Auctions",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "employee_bidder",
+        "description": "Internal employee allowed to bid in auctions"
+      },
+      {
+        "name": "auction_admin",
+        "description": "Auction administrator"
+      },
+      {
+        "name": "auction_approver",
+        "description": "Approver required to finalize auction results"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "webid",
+      "name": "WeBid via oauth2-proxy",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "replace-me",
+      "redirectUris": [
+        "http://localhost:8080/oauth2/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "groups",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

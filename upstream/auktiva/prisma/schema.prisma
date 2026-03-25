@@ -1,0 +1,529 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?   // Optional for OAuth users
+  name          String?
+  image         String?   // Profile image from OAuth provider
+  emailVerified DateTime? // When email was verified (null = unverified)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts                  Account[]
+  auctionMemberships        AuctionMember[]
+  createdAuctions           Auction[]                  @relation("AuctionCreator")
+  createdItems              AuctionItem[]              @relation("ItemCreator")
+  updatedItems              AuctionItem[]              @relation("ItemUpdater")
+  bids                      Bid[]
+  itemDiscussions           ItemDiscussion[]
+  sentInvites               AuctionInvite[]            @relation("InviteSender")
+  notifications             Notification[]
+  settings                  UserSettings?
+  passwordResetTokens       PasswordResetToken[]
+  emailVerificationTokens   EmailVerificationToken[]
+  auctionLeaves             AuctionLeave[]
+
+  @@map("users")
+}
+
+// ============================================
+// OAUTH ACCOUNTS (NextAuth)
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// ============================================
+// USER SETTINGS
+// ============================================
+
+model UserSettings {
+  id                    String   @id @default(cuid())
+  
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // UI Preferences
+  itemSidebarCollapsed  Boolean  @default(false)  // Split view sidebar state
+  
+  // Email Notification Preferences
+  emailOnNewItem        Boolean  @default(false)  // Notify when new item added to auction
+  emailOnOutbid         Boolean  @default(false)  // Notify when outbid
+  emailOnItemWon        Boolean  @default(false)  // Notify when user wins an item
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("user_settings")
+}
+
+// ============================================
+// AUCTION
+// ============================================
+
+enum JoinMode {
+  FREE          // Anyone can join
+  INVITE_ONLY   // Only invited users can join
+  LINK          // Anyone with link can join
+}
+
+enum BidderVisibility {
+  VISIBLE       // Bidder name always visible to everyone
+  ANONYMOUS     // Bidder always anonymous to other bidders
+  PER_BID       // Let each bidder decide per bid
+}
+
+enum ItemEndMode {
+  AUCTION_END   // Items end when auction ends
+  CUSTOM        // Each item can have custom end date
+  NONE          // No end date for items
+}
+
+model Auction {
+  id                String            @id @default(cuid())
+  name              String
+  description       String?
+  
+  // Join settings
+  joinMode          JoinMode          @default(INVITE_ONLY)
+  memberCanInvite   Boolean           @default(false)
+  inviteToken       String?           @unique  // For link-based joining
+  
+  // Bidder visibility settings
+  bidderVisibility  BidderVisibility  @default(VISIBLE)
+  
+  // Timing settings
+  endDate           DateTime?         // null = indefinite
+  itemEndMode       ItemEndMode       @default(CUSTOM)
+  
+  // Thumbnail image
+  thumbnailUrl      String?           // Path to thumbnail image
+  
+  // Admin editing default for new items
+  defaultItemsEditableByAdmin  Boolean  @default(false)
+  
+  // Anti-snipe defaults for new items
+  defaultAntiSnipe             Boolean  @default(false)   // Whether new items get anti-snipe by default
+  defaultAntiSnipeThreshold    Int      @default(300)     // Seconds before end that triggers extension (60-3600)
+  defaultAntiSnipeExtension    Int      @default(300)     // Seconds to extend by (5-3600)
+  
+  // Metadata
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Creator (only this user can edit auction settings)
+  creatorId         String
+  creator           User              @relation("AuctionCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  members           AuctionMember[]
+  items             AuctionItem[]
+  invites           AuctionInvite[]
+  leaves            AuctionLeave[]
+
+  @@map("auctions")
+}
+
+// ============================================
+// AUCTION MEMBERSHIP & ROLES
+// ============================================
+
+enum MemberRole {
+  OWNER     // Can do everything (assigned to creator)
+  ADMIN     // Can manage members and items
+  CREATOR   // Can create auction items
+  BIDDER    // Can only bid
+}
+
+model AuctionMember {
+  id          String      @id @default(cuid())
+  
+  auctionId   String
+  auction     Auction     @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  role        MemberRole  @default(BIDDER)
+  
+  joinedAt    DateTime    @default(now())
+  invitedById String?     // Who invited this member
+
+  @@unique([auctionId, userId])
+  @@map("auction_members")
+}
+
+// ============================================
+// AUCTION LEAVES (tracks voluntary departures to prevent auto-rejoin)
+// ============================================
+
+model AuctionLeave {
+  id          String      @id @default(cuid())
+  
+  auctionId   String
+  auction     Auction     @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  leftAt      DateTime    @default(now())
+
+  @@unique([auctionId, userId])
+  @@map("auction_leaves")
+}
+
+// ============================================
+// AUCTION INVITES
+// ============================================
+
+model AuctionInvite {
+  id          String      @id @default(cuid())
+  
+  auctionId   String
+  auction     Auction     @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  
+  email       String      // Email to invite
+  role        MemberRole  @default(BIDDER)
+  
+  token       String      @unique @default(cuid())
+  
+  expiresAt   DateTime?
+  usedAt      DateTime?   // When the invite was accepted
+  
+  createdAt   DateTime    @default(now())
+  
+  // Who sent the invite
+  senderId    String
+  sender      User        @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@unique([auctionId, email])
+  @@map("auction_invites")
+}
+
+// ============================================
+// CURRENCY
+// ============================================
+
+model Currency {
+  code    String  @id           // ISO 4217 code: "USD", "EUR", "HUF"
+  name    String                // "US Dollar", "Euro", "Hungarian Forint"
+  symbol  String                // "$", "€", "Ft"
+  
+  // Relations
+  items   AuctionItem[]
+
+  @@map("currencies")
+}
+
+// ============================================
+// AUCTION ITEMS
+// ============================================
+
+model AuctionItem {
+  id              String    @id @default(cuid())
+  
+  auctionId       String
+  auction         Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  
+  // Item details
+  name            String
+  description     String?
+  
+  // Pricing
+  currencyCode    String    @default("USD")
+  currency        Currency  @relation(fields: [currencyCode], references: [code])
+  startingBid     Float     @default(0)
+  minBidIncrement Float     @default(1)
+  
+  // Current state
+  currentBid      Float?    // null if no bids yet
+  highestBidderId String?   // User ID of highest bidder
+  
+  // Deprecated - kept for migration, use Bid.isAnonymous instead
+  bidderAnonymous Boolean   @default(false)
+  
+  // Publishing state
+  isPublished     Boolean   @default(false) // Draft items are not visible to other users
+  
+  // Admin editing permission (opt-in by item owner)
+  isEditableByAdmin Boolean @default(false)
+  
+  // Timing
+  endDate         DateTime? // null = follows auction end or no end
+  
+  // Anti-snipe protection
+  antiSnipeEnabled          Boolean   @default(false)
+  antiSnipeThresholdSeconds Int       @default(300)  // Seconds before end that triggers extension (60-3600)
+  antiSnipeExtensionSeconds Int       @default(300)  // Seconds to extend by (5-3600)
+  
+  // Notification tracking
+  winnerNotified  Boolean   @default(false) // Track if winner notification sent
+  
+  // Metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Creator
+  creatorId       String
+  creator         User      @relation("ItemCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  // Last updater (for audit trail)
+  lastUpdatedById String?
+  lastUpdatedBy   User?     @relation("ItemUpdater", fields: [lastUpdatedById], references: [id], onDelete: SetNull)
+  
+  // Discussions
+  discussionsEnabled Boolean   @default(true)  // Admin/creator can toggle
+  
+  // Relations
+  images          AuctionItemImage[]
+  bids            Bid[]
+  discussions     ItemDiscussion[]
+
+  @@map("auction_items")
+}
+
+// ============================================
+// AUCTION ITEM IMAGES
+// ============================================
+
+model AuctionItemImage {
+  id            String      @id @default(cuid())
+  
+  auctionItemId String
+  auctionItem   AuctionItem @relation(fields: [auctionItemId], references: [id], onDelete: Cascade)
+  
+  url           String      // Path or URL to image
+  order         Int         @default(0)  // For ordering images
+  
+  createdAt     DateTime    @default(now())
+
+  @@map("auction_item_images")
+}
+
+// ============================================
+// BIDS
+// ============================================
+
+model Bid {
+  id            String      @id @default(cuid())
+  
+  auctionItemId String
+  auctionItem   AuctionItem @relation(fields: [auctionItemId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount        Float
+  
+  // Per-bid anonymity (only used when auction.bidderVisibility = PER_BID)
+  isAnonymous   Boolean     @default(false)
+  
+  createdAt     DateTime    @default(now())
+
+  @@index([auctionItemId, amount])
+  @@map("bids")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  OUTBID          // Someone outbid you
+  AUCTION_WON     // You won an auction item
+  AUCTION_ENDED   // Auction has ended
+  INVITE_RECEIVED // You received an invite
+  MEMBER_JOINED   // Someone joined your auction
+  NEW_ITEM        // New item added to an auction you're in
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        NotificationType
+  title       String
+  message     String
+  imageUrl    String?          // Optional image for rich notifications
+  
+  // Optional references
+  auctionId   String?
+  itemId      String?
+  
+  read        Boolean          @default(false)
+  
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+// ============================================
+// EMAIL LOG (for failed emails and retry)
+// ============================================
+
+enum EmailStatus {
+  PENDING       // Queued for sending
+  SENT          // Successfully sent
+  FAILED        // Failed to send (will retry)
+  ABANDONED     // Too many retries, gave up
+}
+
+enum EmailType {
+  WELCOME            // Welcome email on registration
+  INVITE             // Auction invite
+  NEW_ITEM           // New item added to auction
+  OUTBID             // User was outbid
+  PASSWORD_RESET     // Password reset request
+  ITEM_WON           // User won an item
+  ACCOUNT_EXISTS     // Registration attempt with existing email
+  EMAIL_VERIFICATION // Email verification on registration
+}
+
+model EmailLog {
+  id            String       @id @default(cuid())
+  
+  // Recipient info
+  toEmail       String
+  toName        String?
+  
+  // Email content
+  type          EmailType
+  subject       String
+  htmlContent   String       // Rendered HTML content
+  
+  // Status tracking
+  status        EmailStatus  @default(PENDING)
+  retryCount    Int          @default(0)
+  lastError     String?      // Last error message
+  
+  // Metadata (JSON string for flexibility)
+  metadata      String?      // JSON payload for debugging
+  
+  sentAt        DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([status, createdAt])
+  @@map("email_logs")
+}
+
+// ============================================
+// SYSTEM SETTINGS (singleton)
+// ============================================
+
+model SystemSettings {
+  id                    String   @id @default("system")  // Always "system" - singleton pattern
+  
+  // Deployment admin - can trigger updates
+  deploymentAdminEmail  String?  // Email of user who can manage deployments
+  
+  // Update settings
+  autoCheckUpdates      Boolean  @default(true)  // Whether to check for updates
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// ============================================
+// PASSWORD RESET TOKENS
+// ============================================
+
+model PasswordResetToken {
+  id          String   @id @default(cuid())
+  
+  token       String   @unique  // Hashed token for security
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("password_reset_tokens")
+}
+
+// ============================================
+// EMAIL VERIFICATION TOKENS
+// ============================================
+
+model EmailVerificationToken {
+  id          String   @id @default(cuid())
+  
+  token       String   @unique  // Hashed token for security
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("email_verification_tokens")
+}
+
+// ============================================
+// ITEM DISCUSSIONS (threaded comments)
+// ============================================
+
+model ItemDiscussion {
+  id            String      @id @default(cuid())
+  
+  auctionItemId String
+  auctionItem   AuctionItem @relation(fields: [auctionItemId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content       String      // Rich text HTML content (sanitized)
+  
+  // Threading support - null means top-level discussion
+  parentId      String?
+  parent        ItemDiscussion?  @relation("DiscussionReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       ItemDiscussion[] @relation("DiscussionReplies")
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([auctionItemId, createdAt])
+  @@index([parentId])
+  @@map("item_discussions")
+}

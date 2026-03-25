@@ -1,0 +1,719 @@
+import { prisma } from "@/lib/prisma";
+import { getPublicUrl } from "@/lib/storage";
+import { MemberRole } from "@/generated/prisma/enums";
+import type { Auction, AuctionMember } from "@/generated/prisma/client";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface AuctionWithCounts extends Auction {
+  creator: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  _count: {
+    items: number;
+    members: number;
+  };
+}
+
+export interface AuctionListItem {
+  id: string;
+  name: string;
+  description: string | null;
+  endDate: string | null;
+  createdAt: string;
+  role: string;
+  thumbnailUrl: string | null;
+  _count: {
+    items: number;
+    members: number;
+  };
+}
+
+export interface CreateAuctionInput {
+  name: string;
+  description?: string | null;
+  joinMode?: "FREE" | "INVITE_ONLY" | "LINK";
+  memberCanInvite?: boolean;
+  bidderVisibility?: "VISIBLE" | "ANONYMOUS" | "PER_BID";
+  endDate?: string | null;
+  itemEndMode?: "AUCTION_END" | "CUSTOM" | "NONE";
+  defaultAntiSnipe?: boolean;
+  defaultAntiSnipeThreshold?: number;
+  defaultAntiSnipeExtension?: number;
+}
+
+export interface UpdateAuctionInput {
+  name?: string;
+  description?: string | null;
+  joinMode?: "FREE" | "INVITE_ONLY" | "LINK";
+  memberCanInvite?: boolean;
+  bidderVisibility?: "VISIBLE" | "ANONYMOUS" | "PER_BID";
+  itemEndMode?: "AUCTION_END" | "CUSTOM" | "NONE";
+  endDate?: string | null;
+  defaultItemsEditableByAdmin?: boolean;
+  defaultAntiSnipe?: boolean;
+  defaultAntiSnipeThreshold?: number;
+  defaultAntiSnipeExtension?: number;
+}
+
+export interface AuctionDetailForPage {
+  id: string;
+  name: string;
+  description: string | null;
+  joinMode: string;
+  memberCanInvite: boolean;
+  bidderVisibility: string;
+  endDate: string | null;
+  itemEndMode: string;
+  inviteToken: string | null;
+  createdAt: string;
+  updatedAt: string;
+  thumbnailUrl: string | null;
+  defaultItemsEditableByAdmin: boolean;
+  defaultAntiSnipe: boolean;
+  defaultAntiSnipeThreshold: number;
+  defaultAntiSnipeExtension: number;
+  creator: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  _count: {
+    items: number;
+    members: number;
+  };
+}
+
+export interface CloseAuctionResult {
+  auction: {
+    id: string;
+    name: string;
+    endDate: string | undefined;
+  };
+  winners: Array<{
+    itemId: string;
+    itemName: string;
+    winningBid: number;
+    winner: {
+      id: string;
+      name: string | null;
+      email: string;
+    };
+    currencyCode: string;
+  }>;
+  totalItems: number;
+  itemsWithBids: number;
+}
+
+// ============================================================================
+// Query Functions
+// ============================================================================
+
+/**
+ * Get auction by ID with creator and counts
+ */
+export async function getAuctionById(
+  auctionId: string,
+): Promise<AuctionWithCounts | null> {
+  return prisma.auction.findUnique({
+    where: { id: auctionId },
+    include: {
+      creator: {
+        select: { id: true, name: true, email: true },
+      },
+      _count: {
+        select: {
+          items: true,
+          members: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Get auction for detail page with all necessary data
+ */
+export async function getAuctionForDetailPage(
+  auctionId: string,
+): Promise<AuctionDetailForPage | null> {
+  const auction = await prisma.auction.findUnique({
+    where: { id: auctionId },
+    include: {
+      creator: {
+        select: { id: true, name: true, email: true },
+      },
+      _count: {
+        select: {
+          items: true,
+          members: true,
+        },
+      },
+    },
+  });
+
+  if (!auction) return null;
+
+  return {
+    ...auction,
+    endDate: auction.endDate?.toISOString() || null,
+    createdAt: auction.createdAt.toISOString(),
+    updatedAt: auction.updatedAt.toISOString(),
+    thumbnailUrl: auction.thumbnailUrl
+      ? getPublicUrl(auction.thumbnailUrl)
+      : null,
+  };
+}
+
+/**
+ * Get all auctions for a user (as member)
+ */
+export async function getUserAuctions(
+  userId: string,
+): Promise<AuctionListItem[]> {
+  const memberships = await prisma.auctionMember.findMany({
+    where: { userId },
+    include: {
+      auction: {
+        include: {
+          _count: {
+            select: {
+              items: true,
+              members: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return memberships.map((m) => ({
+    id: m.auction.id,
+    name: m.auction.name,
+    description: m.auction.description,
+    endDate: m.auction.endDate?.toISOString() || null,
+    createdAt: m.auction.createdAt.toISOString(),
+    role: m.role,
+    thumbnailUrl: m.auction.thumbnailUrl
+      ? getPublicUrl(m.auction.thumbnailUrl)
+      : null,
+    _count: m.auction._count,
+  }));
+}
+
+/**
+ * Get open auctions that user is not a member of
+ */
+export async function getOpenAuctionsForUser(
+  userId: string,
+): Promise<AuctionListItem[]> {
+  const [memberAuctionIds, leftAuctionIds] = await Promise.all([
+    prisma.auctionMember.findMany({
+      where: { userId },
+      select: { auctionId: true },
+    }),
+    prisma.auctionLeave.findMany({
+      where: { userId },
+      select: { auctionId: true },
+    }),
+  ]);
+
+  const memberIds = new Set(memberAuctionIds.map((m) => m.auctionId));
+  const leftIds = new Set(leftAuctionIds.map((l) => l.auctionId));
+
+  const openAuctions = await prisma.auction.findMany({
+    where: {
+      joinMode: "FREE",
+      id: { notIn: [...memberIds] },
+    },
+    include: {
+      _count: {
+        select: {
+          items: true,
+          members: true,
+        },
+      },
+    },
+  });
+
+  return openAuctions.map((auction) => ({
+    id: auction.id,
+    name: auction.name,
+    description: auction.description,
+    endDate: auction.endDate?.toISOString() || null,
+    createdAt: auction.createdAt.toISOString(),
+    role: leftIds.has(auction.id) ? "Left" : "Open",
+    thumbnailUrl: auction.thumbnailUrl
+      ? getPublicUrl(auction.thumbnailUrl)
+      : null,
+    _count: auction._count,
+  }));
+}
+
+/**
+ * Get user's membership for an auction
+ */
+export async function getUserMembership(
+  auctionId: string,
+  userId: string,
+): Promise<AuctionMember | null> {
+  return prisma.auctionMember.findUnique({
+    where: {
+      auctionId_userId: {
+        auctionId,
+        userId,
+      },
+    },
+  });
+}
+
+/**
+ * Get user's membership with auction details
+ */
+export async function getUserMembershipWithAuction(
+  auctionId: string,
+  userId: string,
+) {
+  return prisma.auctionMember.findUnique({
+    where: {
+      auctionId_userId: {
+        auctionId,
+        userId,
+      },
+    },
+    include: {
+      auction: true,
+    },
+  });
+}
+
+// ============================================================================
+// Mutation Functions
+// ============================================================================
+
+/**
+ * Create a new auction with the creator as owner
+ */
+export async function createAuction(
+  creatorId: string,
+  input: CreateAuctionInput,
+): Promise<AuctionWithCounts> {
+  return prisma.auction.create({
+    data: {
+      name: input.name,
+      description: input.description || null,
+      joinMode: input.joinMode || "INVITE_ONLY",
+      memberCanInvite: input.memberCanInvite || false,
+      bidderVisibility: input.bidderVisibility || "VISIBLE",
+      endDate: input.endDate ? new Date(input.endDate) : null,
+      itemEndMode: input.itemEndMode || "CUSTOM",
+      defaultAntiSnipe: input.defaultAntiSnipe ?? false,
+      defaultAntiSnipeThreshold: input.defaultAntiSnipeThreshold ?? 300,
+      defaultAntiSnipeExtension: input.defaultAntiSnipeExtension ?? 300,
+      creatorId,
+      members: {
+        create: {
+          userId: creatorId,
+          role: "OWNER",
+        },
+      },
+    },
+    include: {
+      creator: {
+        select: { id: true, name: true, email: true },
+      },
+      _count: {
+        select: {
+          items: true,
+          members: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Update an auction
+ */
+export async function updateAuction(
+  auctionId: string,
+  input: UpdateAuctionInput,
+): Promise<Auction> {
+  const updateData: Record<string, unknown> = {};
+
+  if (input.name !== undefined) updateData.name = input.name;
+  if (input.description !== undefined)
+    updateData.description = input.description;
+  if (input.joinMode !== undefined) updateData.joinMode = input.joinMode;
+  if (input.memberCanInvite !== undefined)
+    updateData.memberCanInvite = input.memberCanInvite;
+  if (input.bidderVisibility !== undefined)
+    updateData.bidderVisibility = input.bidderVisibility;
+  if (input.itemEndMode !== undefined)
+    updateData.itemEndMode = input.itemEndMode;
+  if (input.endDate !== undefined) {
+    updateData.endDate = input.endDate ? new Date(input.endDate) : null;
+  }
+  if (input.defaultItemsEditableByAdmin !== undefined) {
+    updateData.defaultItemsEditableByAdmin = input.defaultItemsEditableByAdmin;
+  }
+  if (input.defaultAntiSnipe !== undefined) {
+    updateData.defaultAntiSnipe = input.defaultAntiSnipe;
+  }
+  if (input.defaultAntiSnipeThreshold !== undefined) {
+    updateData.defaultAntiSnipeThreshold = input.defaultAntiSnipeThreshold;
+  }
+  if (input.defaultAntiSnipeExtension !== undefined) {
+    updateData.defaultAntiSnipeExtension = input.defaultAntiSnipeExtension;
+  }
+
+  return prisma.auction.update({
+    where: { id: auctionId },
+    data: updateData,
+  });
+}
+
+/**
+ * Delete an auction
+ */
+export async function deleteAuction(auctionId: string): Promise<void> {
+  await prisma.auction.delete({
+    where: { id: auctionId },
+  });
+}
+
+/**
+ * Close an auction and all its items
+ */
+export async function closeAuction(
+  auctionId: string,
+): Promise<CloseAuctionResult> {
+  // Get all items with their highest bids
+  const items = await prisma.auctionItem.findMany({
+    where: { auctionId },
+    include: {
+      bids: {
+        orderBy: { amount: "desc" },
+        take: 1,
+        include: {
+          user: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      },
+    },
+  });
+
+  // Close the auction by setting end date to now
+  const auction = await prisma.auction.update({
+    where: { id: auctionId },
+    data: {
+      endDate: new Date(),
+    },
+  });
+
+  // Close all items that haven't ended yet
+  const now = new Date();
+  await prisma.auctionItem.updateMany({
+    where: {
+      auctionId,
+      OR: [{ endDate: null }, { endDate: { gt: now } }],
+    },
+    data: {
+      endDate: now,
+    },
+  });
+
+  // Prepare winners summary
+  const winners = items
+    .filter((item) => item.bids.length > 0)
+    .map((item) => ({
+      itemId: item.id,
+      itemName: item.name,
+      winningBid: item.bids[0].amount,
+      winner: item.bids[0].user,
+      currencyCode: item.currencyCode,
+    }));
+
+  return {
+    auction: {
+      id: auction.id,
+      name: auction.name,
+      endDate: auction.endDate?.toISOString(),
+    },
+    winners,
+    totalItems: items.length,
+    itemsWithBids: winners.length,
+  };
+}
+
+/**
+ * Check if a user has previously left an auction voluntarily
+ */
+export async function hasUserLeftAuction(
+  auctionId: string,
+  userId: string,
+): Promise<boolean> {
+  const leave = await prisma.auctionLeave.findUnique({
+    where: { auctionId_userId: { auctionId, userId } },
+  });
+  return !!leave;
+}
+
+/**
+ * Auto-join user to an open/link auction.
+ * Returns null if the user previously left this auction voluntarily.
+ */
+export async function autoJoinAuction(
+  auctionId: string,
+  userId: string,
+): Promise<AuctionMember | null> {
+  // Don't auto-rejoin if the user previously left voluntarily
+  const hasLeft = await hasUserLeftAuction(auctionId, userId);
+  if (hasLeft) {
+    return null;
+  }
+
+  return prisma.auctionMember.create({
+    data: {
+      auctionId,
+      userId,
+      role: MemberRole.BIDDER,
+    },
+  });
+}
+
+/**
+ * Rejoin a public auction the user previously left.
+ * Clears the AuctionLeave record and creates a new membership atomically.
+ */
+export async function rejoinAuction(
+  auctionId: string,
+  userId: string,
+): Promise<AuctionMember> {
+  return prisma.$transaction(async (tx) => {
+    // Verify the auction exists and is joinable
+    const auction = await tx.auction.findUnique({
+      where: { id: auctionId },
+      select: { joinMode: true },
+    });
+    if (!auction) {
+      throw new Error("AUCTION_NOT_FOUND");
+    }
+    if (auction.joinMode !== "FREE" && auction.joinMode !== "LINK") {
+      throw new Error("NOT_PUBLIC_AUCTION");
+    }
+
+    // Verify user actually has a leave record
+    const leave = await tx.auctionLeave.findUnique({
+      where: { auctionId_userId: { auctionId, userId } },
+    });
+    if (!leave) {
+      throw new Error("NOT_LEFT");
+    }
+
+    // Verify not already a member
+    const existing = await tx.auctionMember.findUnique({
+      where: { auctionId_userId: { auctionId, userId } },
+    });
+    if (existing) {
+      throw new Error("ALREADY_MEMBER");
+    }
+
+    // Clear leave record and create membership
+    await tx.auctionLeave.delete({
+      where: { auctionId_userId: { auctionId, userId } },
+    });
+
+    return tx.auctionMember.create({
+      data: {
+        auctionId,
+        userId,
+        role: MemberRole.BIDDER,
+      },
+    });
+  });
+}
+
+/**
+ * Get auction results data for results page
+ * @param isAdmin - If true, show winner info even for anonymous bids (for auction owners)
+ */
+export async function getAuctionResultsData(
+  auctionId: string,
+  userId: string,
+  isAdmin: boolean = false,
+) {
+  const auction = await prisma.auction.findUnique({
+    where: { id: auctionId },
+  });
+
+  if (!auction) return null;
+
+  const items = await prisma.auctionItem.findMany({
+    where: { auctionId },
+    include: {
+      currency: true,
+      creator: {
+        select: { id: true, name: true, email: true },
+      },
+      images: {
+        orderBy: { order: "asc" },
+        take: 1,
+      },
+      bids: {
+        orderBy: { amount: "desc" },
+        take: 1,
+        include: {
+          user: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      },
+      _count: {
+        select: { bids: true },
+      },
+    },
+  });
+
+  const totalBids = items.reduce((sum, item) => sum + item._count.bids, 0);
+
+  const winners = items
+    .filter((item) => item.bids.length > 0)
+    .map((item) => {
+      const isItemCreator = item.creatorId === userId;
+      // Show winner info if: admin, or item creator (so they can contact winner)
+      const canSeeWinner = isAdmin || isItemCreator || !item.bidderAnonymous;
+      return {
+        itemId: item.id,
+        itemName: item.name,
+        thumbnailUrl: item.images[0]?.url
+          ? getPublicUrl(item.images[0].url)
+          : null,
+        winningBid: item.bids[0].amount,
+        currencyCode: item.currencyCode,
+        currencySymbol: item.currency.symbol,
+        winner: canSeeWinner ? item.bids[0].user : null,
+        isCurrentUser: item.bids[0].userId === userId,
+        isItemCreator,
+      };
+    });
+
+  const userWins = winners.filter((w) => w.isCurrentUser);
+
+  const isEnded = auction.endDate
+    ? new Date(auction.endDate) < new Date()
+    : false;
+
+  return {
+    auction: {
+      id: auction.id,
+      name: auction.name,
+      description: auction.description,
+      endDate: auction.endDate?.toISOString() || null,
+      isEnded,
+    },
+    winners,
+    userWins,
+    totalItems: items.length,
+    totalBids,
+  };
+}
+
+// ============================================================================
+// Permission Helpers
+// ============================================================================
+
+/**
+ * Check if user is owner of auction
+ */
+export function isOwner(membership: AuctionMember | null): boolean {
+  return membership?.role === "OWNER";
+}
+
+/**
+ * Check if user is admin (owner or admin role)
+ */
+export function isAdmin(membership: AuctionMember | null): boolean {
+  return membership?.role === "OWNER" || membership?.role === "ADMIN";
+}
+
+/**
+ * Check if user can create items
+ */
+export function canCreateItems(membership: AuctionMember | null): boolean {
+  return ["OWNER", "ADMIN", "CREATOR"].includes(membership?.role || "");
+}
+
+/**
+ * Check if auction allows open join
+ */
+export function canAutoJoin(auction: Auction): boolean {
+  return auction.joinMode === "FREE" || auction.joinMode === "LINK";
+}
+
+// ============================================================================
+// Public Access Functions (for OG tags / social sharing)
+// ============================================================================
+
+export interface PublicAuctionData {
+  id: string;
+  name: string;
+  description: string | null;
+  thumbnailUrl: string | null;
+  endDate: string | null;
+  joinMode: string;
+  creatorName: string | null;
+  _count: {
+    items: number;
+    members: number;
+  };
+}
+
+/**
+ * Get public auction data for OG tags and social sharing.
+ * Only returns data for auctions that are publicly accessible (FREE or LINK join mode).
+ */
+export async function getPublicAuctionData(
+  auctionId: string,
+): Promise<PublicAuctionData | null> {
+  const auction = await prisma.auction.findUnique({
+    where: { id: auctionId },
+    include: {
+      creator: {
+        select: { name: true },
+      },
+      _count: {
+        select: {
+          items: true,
+          members: true,
+        },
+      },
+    },
+  });
+
+  // Only return data for publicly accessible auctions
+  if (
+    !auction ||
+    (auction.joinMode !== "FREE" && auction.joinMode !== "LINK")
+  ) {
+    return null;
+  }
+
+  return {
+    id: auction.id,
+    name: auction.name,
+    description: auction.description,
+    thumbnailUrl: auction.thumbnailUrl
+      ? getPublicUrl(auction.thumbnailUrl)
+      : null,
+    endDate: auction.endDate?.toISOString() || null,
+    joinMode: auction.joinMode,
+    creatorName: auction.creator.name,
+    _count: auction._count,
+  };
+}
